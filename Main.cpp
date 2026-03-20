@@ -1,19 +1,45 @@
 #include<iostream>
-
+#include <vector>
 class Matrix {
     public:
-        int pro;
+        std::vector<std::vector<int>> Weights;
+        int Rows;
+        int Collumns;
+        void RandomNew(int RowsC, int CollumnsC) {
+            Rows = RowsC;
+            Collumns = CollumnsC;
+
+
+            for (int i = 0; i< Collumns; i++) {
+                std::vector<int> Collumn;
+                for (int j = 0; j< Rows; j++) {
+                    Collumn.push_back(std::rand());
+
+                }
+                Weights.push_back(Collumn);
+          
+            }
+        }
+        void PrintMatrix() {
+             for (int i =0; i< Collumns; i++) {
+                for (int j = 0; j< Rows; j++) {
+                    std:: cout << Weights[i][j] << " ";
+                }
+                std::cout << std::endl;
+          
+            }
+        }
+
 
 
 };
 
 int main(){
     Matrix Test;
-    Test.pro = 3;
+    Test.RandomNew(4,5);
+    Test.PrintMatrix();
 
-    std::cout << 3;
 
-    std::cin >> Test.pro;
 
     return 0;
 }
