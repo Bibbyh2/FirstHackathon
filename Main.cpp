@@ -2,6 +2,8 @@
 #include <vector>
 class Matrix {
     public:
+        const float rate = 100;
+        const float strength = 500;
         std::vector<std::vector<float>> Weights;
         int Rows;
         int Collumns;
@@ -74,6 +76,18 @@ class Matrix {
             }
 
         }
+        void Mutate() {
+            for (int i =0; i< Collumns; i++) {
+                for (int j = 0; j< Rows; j++) {
+                    if (std::rand() / RAND_MAX < rate) {
+                        float noise = ((float)std::rand() / RAND_MAX - 0.5f) * 2 * strength;
+                        Weights[i][j] += noise;
+                    }
+                }
+          
+            }
+
+        }
 };
 class NeuralNet {
     public:
@@ -103,6 +117,11 @@ class NeuralNet {
          return Input.Weights[0][0];
 
     }
+    void Mutate() {
+        L1.Mutate();
+        L2.Mutate();
+        L3.Mutate();
+    }
 };
 
 int main(){
@@ -110,6 +129,10 @@ int main(){
     Pro.Make();
     float result = Pro.Query(1);
     std::cout<< std::endl <<result;
+    result = Pro.Query(1);
+    std::cout<< std::endl <<result;
+
+    Pro.Mutate();
     result = Pro.Query(1);
     std::cout<< std::endl <<result;
 
