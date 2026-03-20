@@ -4,7 +4,7 @@
 
 float testfunction(int x) {
         float val = 5;
-        return val *x;
+        return val *sin(x);
 }
 class Matrix {
     public:
@@ -116,7 +116,7 @@ class NeuralNet {
     float Query(float x) {
         Matrix Input;
         //std::cout << "PPPPPP" << std::endl;
-        Input.SetWeights({{x}});
+        Input.SetWeights({{x/100}});
         //Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
         Input.Transform(L1);
@@ -128,10 +128,9 @@ class NeuralNet {
        // Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
         Input.Transform(L3);
-        Input.ActivationF();
         //Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
-         return Input.Weights[0][0];
+         return Input.Weights[0][0]*100;
 
     }
     void Mutate() {
@@ -190,12 +189,12 @@ class Population {
                     difference *= -1;
                 }
                 totaltdif += difference;
-                if (bestdif == -1) {
+
+            }
+            if (bestdif == -1) {
                     bestdif = totaltdif;
                     best = i; 
                 }
-
-            }
             if(bestdif > totaltdif) {
                 bestdif = totaltdif;
                 best = i; 
@@ -222,14 +221,21 @@ class Population {
 
 };
 
+
+
+
 int main(){
 
     Population Pro;
     Pro.Create();
     for (int i=0; i< 10000; i++) {
-        int begininterval = std::rand()/1000.0f;
+        //int begininterval = std::rand()/1000.0f;
+        int begininterval = 4;
         int best = Pro.TestOnIntereval(begininterval);
-        std::cout << Pro.Pop[best].Query(begininterval) << std::endl;
+        float Point = Pro.Pop[best].Query(begininterval);
+        float answer = testfunction(begininterval);
+        std::cout << answer - Point << std::endl;
+        //std::cout << Point << std::endl;
         //std::cout << best << std::endl;
         
         Pro.Life(best);
