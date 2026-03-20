@@ -1,9 +1,15 @@
 #include<iostream>
 #include <vector>
+#include <cmath>
+
+float testfunction(int x) {
+        float val = 5;
+        return val *x;
+}
 class Matrix {
     public:
-        const float rate = 100;
-        const float strength = 500;
+        float rate = 0.3f;
+        float strength = 0.5f;
         std::vector<std::vector<float>> Weights;
         int Rows;
         int Collumns;
@@ -15,7 +21,8 @@ class Matrix {
             for (int i = 0; i< Collumns; i++) {
                 std::vector<float> Collumn;
                 for (int j = 0; j< Rows; j++) {
-                    Collumn.push_back(std::rand());
+                    //Collumn.push_back(std::rand());
+                    Collumn.push_back(((float)std::rand() / RAND_MAX - 0.5f) * 2.0f);
 
                 }
                 Weights.push_back(Collumn);
@@ -79,7 +86,7 @@ class Matrix {
         void Mutate() {
             for (int i =0; i< Collumns; i++) {
                 for (int j = 0; j< Rows; j++) {
-                    if (std::rand() / RAND_MAX < rate) {
+                    if ((float)std::rand() / RAND_MAX < rate) {
                         float noise = ((float)std::rand() / RAND_MAX - 0.5f) * 2 * strength;
                         Weights[i][j] += noise;
                     }
@@ -87,6 +94,13 @@ class Matrix {
           
             }
 
+        }
+        void ActivationF(){
+            for (int i =0; i< Collumns; i++) {
+                for (int j = 0; j< Rows; j++) {
+                    Weights[i][j] = std::tanh(Weights[i][j]);
+                }
+            }
         }
 };
 class NeuralNet {
@@ -106,12 +120,15 @@ class NeuralNet {
         //Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
         Input.Transform(L1);
+        Input.ActivationF();
         //Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
         Input.Transform(L2);
+        Input.ActivationF();
        // Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
         Input.Transform(L3);
+        Input.ActivationF();
         //Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
          return Input.Weights[0][0];
@@ -122,20 +139,101 @@ class NeuralNet {
         L2.Mutate();
         L3.Mutate();
     }
+    NeuralNet clone(NeuralNet body) {
+        NeuralNet New;
+        New.Make();
+        New.L1.Weights = body.L1.Weights;
+        New.L2.Weights = body.L2.Weights;
+        New.L3.Weights = body.L3.Weights;
+        return New;
+    }
+    int TestOnIntereval(int start) {
+        float totaltdif = 0;
+        for (int j = 0; j< 15;j++) {
+            int x = start + j;
+            float correct = testfunction(x);
+            float result = Query(x);
+            float difference = correct - result;
+            if (difference < 0) {
+                difference *= -1;
+            }
+            totaltdif += difference;
+        }
+        return totaltdif;
+    }
+};
+class Population {
+
+    public:
+    int Size = 100;
+    std::vector<NeuralNet> Pop;
+    void Create() {
+        for (int i =0; i< Size; i++) {
+            NeuralNet Person;
+            Person.Make();
+            Pop.push_back(Person);
+        }
+
+    }
+    int TestOnIntereval(int start) {
+        int best = 0;
+        float bestdif =-1;
+        for (int i =0; i< Size; i++) {
+            NeuralNet Person = Pop[i];
+            float totaltdif = 0;
+            for (int j = 0; j< 15;j++) {
+                int x = start + j;
+                float correct = testfunction(x);
+                float result = Person.Query(x);
+                float difference = correct - result;
+                if (difference < 0) {
+                    difference *= -1;
+                }
+                totaltdif += difference;
+                if (bestdif == -1) {
+                    bestdif = totaltdif;
+                    best = i; 
+                }
+
+            }
+            if(bestdif > totaltdif) {
+                bestdif = totaltdif;
+                best = i; 
+            }
+        }
+        return best;
+    }
+    void Life(int best) {
+        NeuralNet Person = Pop[best];
+        std::vector<NeuralNet> NewPop;
+        NeuralNet New;
+        New = New.clone(Person);
+        NewPop.push_back(New);    
+        for (int i =1; i< Size; i++) {
+            NeuralNet New;
+            New = New.clone(Person);
+            New.Mutate();
+            NewPop.push_back(New);
+            
+        }
+        Pop = NewPop;
+    }
+
+
 };
 
 int main(){
-    NeuralNet Pro;
-    Pro.Make();
-    float result = Pro.Query(1);
-    std::cout<< std::endl <<result;
-    result = Pro.Query(1);
-    std::cout<< std::endl <<result;
 
-    Pro.Mutate();
-    result = Pro.Query(1);
-    std::cout<< std::endl <<result;
-
+    Population Pro;
+    Pro.Create();
+    for (int i=0; i< 10000; i++) {
+        int begininterval = std::rand()/1000.0f;
+        int best = Pro.TestOnIntereval(begininterval);
+        std::cout << Pro.Pop[best].Query(begininterval) << std::endl;
+        //std::cout << best << std::endl;
+        
+        Pro.Life(best);
+    }
 
     return 0;
 }
