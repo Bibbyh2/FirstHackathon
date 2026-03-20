@@ -1,8 +1,9 @@
 #include<iostream>
 #include <vector>
 #include <cmath>
+#include <windows.h>
 
-float testfunction(int x) {
+float testfunction(float x) {
         float val = 5;
         return val *sin(x);
 }
@@ -116,7 +117,7 @@ class NeuralNet {
     float Query(float x) {
         Matrix Input;
         //std::cout << "PPPPPP" << std::endl;
-        Input.SetWeights({{x/100}});
+        Input.SetWeights({{x}});
         //Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
         Input.Transform(L1);
@@ -130,7 +131,7 @@ class NeuralNet {
         Input.Transform(L3);
         //Input.PrintMatrix();
          //std::cout << "PPPPPP" << std::endl;
-         return Input.Weights[0][0]*100;
+         return Input.Weights[0][0];
 
     }
     void Mutate() {
@@ -174,14 +175,14 @@ class Population {
         }
 
     }
-    int TestOnIntereval(int start) {
+    int TestOnIntereval(float start) {
         int best = 0;
         float bestdif =-1;
         for (int i =0; i< Size; i++) {
             NeuralNet Person = Pop[i];
             float totaltdif = 0;
-            for (int j = 0; j< 15;j++) {
-                int x = start + j;
+            for (int j = 0; j< 160; j++) {
+                float x = start + j * 0.1f;
                 float correct = testfunction(x);
                 float result = Person.Query(x);
                 float difference = correct - result;
@@ -191,13 +192,9 @@ class Population {
                 totaltdif += difference;
 
             }
-            if (bestdif == -1) {
-                    bestdif = totaltdif;
-                    best = i; 
-                }
-            if(bestdif > totaltdif) {
+            if (bestdif == -1 || bestdif > totaltdif) {
                 bestdif = totaltdif;
-                best = i; 
+                best = i;
             }
         }
         return best;
@@ -240,8 +237,8 @@ class Display {
                 Screen[i][j] = ' ';
     }
     void Refresh() {
-        // move terminal cursor to top instead of scrolling
-        std::cout << "\033[H";
+        COORD coord = {0, 0};
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
         for (int i = -l; i < l; i++) {
             for (int j = -w; j < w; j++)
                 std::cout << Screen[i+l][j+w];
@@ -254,7 +251,7 @@ class Display {
         for (int i = -w; i < w; i++) {
             int result = static_cast<int>(testfunction(i / 10.0f) * yscale);
             if (result > -l && result < l)
-                Screen[result + l][i + w] = '#';
+                Screen[l - result][i + w] = '#';
         }
     }
     void DrawNet(NeuralNet& net) {
@@ -263,7 +260,7 @@ class Display {
             float x = i / 10.0f;
             int result = static_cast<int>(net.Query(x) * yscale);
             if (result > -l && result < l)
-                Screen[result + l][i + w] = '*';
+                Screen[l - result][i + w] = '*';
         }
     }
 };
@@ -271,17 +268,17 @@ class Display {
 
 int main(){
 
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    GetConsoleMode(hOut, &dwMode);
+    SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
     Population Pro;
     Pro.Create();
     Display Graph;
     Graph.Start();
-    for (int i=0; i< 10; i++) {
-        //int begininterval = std::rand()/1000.0f;
-        int begininterval = 4;
-        int best = Pro.TestOnIntereval(begininterval);
-        float Point = Pro.Pop[best].Query(begininterval);
-        float answer = testfunction(begininterval);
-        std::cout << answer - Point << std::endl;
+    for (int i=0; i< 10000; i++) {
+        int best = Pro.TestOnIntereval(-8.0f);
         //std::cout << Point << std::endl;
         //std::cout << best << std::endl;
         Graph.Clear();
