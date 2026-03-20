@@ -221,14 +221,61 @@ class Population {
 
 };
 
-
+class Display {
+    public:
+    int l = 20;
+    int w = 80;
+    std::vector<std::vector<char>> Screen;
+    
+    void Start() {
+        for (int i = -l; i < l; i++) {
+            std::vector<char> layer;
+            for (int j = -w; j < w; j++) layer.push_back(' ');
+            Screen.push_back(layer);
+        }
+    }
+    void Clear() {
+        for (int i = 0; i < (int)Screen.size(); i++)
+            for (int j = 0; j < (int)Screen[i].size(); j++)
+                Screen[i][j] = ' ';
+    }
+    void Refresh() {
+        // move terminal cursor to top instead of scrolling
+        std::cout << "\033[H";
+        for (int i = -l; i < l; i++) {
+            for (int j = -w; j < w; j++)
+                std::cout << Screen[i+l][j+w];
+            std::cout << "\n";
+        }
+        std::cout.flush();
+    }
+    void DrawTest() {
+        float yscale = l / 5.0f;
+        for (int i = -w; i < w; i++) {
+            int result = static_cast<int>(testfunction(i / 10.0f) * yscale);
+            if (result > -l && result < l)
+                Screen[result + l][i + w] = '#';
+        }
+    }
+    void DrawNet(NeuralNet& net) {
+        float yscale = l / 5.0f;
+        for (int i = -w; i < w; i++) {
+            float x = i / 10.0f;
+            int result = static_cast<int>(net.Query(x) * yscale);
+            if (result > -l && result < l)
+                Screen[result + l][i + w] = '*';
+        }
+    }
+};
 
 
 int main(){
 
     Population Pro;
     Pro.Create();
-    for (int i=0; i< 10000; i++) {
+    Display Graph;
+    Graph.Start();
+    for (int i=0; i< 10; i++) {
         //int begininterval = std::rand()/1000.0f;
         int begininterval = 4;
         int best = Pro.TestOnIntereval(begininterval);
@@ -237,9 +284,14 @@ int main(){
         std::cout << answer - Point << std::endl;
         //std::cout << Point << std::endl;
         //std::cout << best << std::endl;
-        
+        Graph.Clear();
+        Graph.DrawTest();               
+        Graph.DrawNet(Pro.Pop[best]);   
+        Graph.Refresh();
         Pro.Life(best);
     }
+   
+
 
     return 0;
 }
